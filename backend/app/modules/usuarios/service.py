@@ -11,6 +11,8 @@ import uuid
 ROLES_VALIDOS = {"cliente", "admin", "tecnico"}
 
 def crear_usuario(db: Session, data: UsuarioCreate) -> Usuario:
+
+
     if data.tipo not in ROLES_VALIDOS:
         raise HTTPException(
             status_code=400,
@@ -19,6 +21,8 @@ def crear_usuario(db: Session, data: UsuarioCreate) -> Usuario:
     if db.query(Usuario).filter(Usuario.email == data.email).first():
         raise HTTPException(status_code=400, detail="El email ya está registrado")
 
+
+    
     usuario = Usuario(
         id=uuid.uuid4(),
         nombres=data.nombres,
@@ -28,11 +32,20 @@ def crear_usuario(db: Session, data: UsuarioCreate) -> Usuario:
         password_hash=hash_password(data.password),
         tipo=data.tipo,
     )
+    print(">>>>> PASSWORD:", data.password)
+    print(">>>>> LONGITUD:", len(data.password))
+    
+    print("===== DATA RECIBIDA =====")
+    print("nombres:", data.nombres)
+    print("email:", data.email)
+    print("tipo:", data.tipo)
+    print("password len:", len(data.password))
+    print("=========================")
     db.add(usuario)
     db.commit()
     db.refresh(usuario)
     return usuario
-
+    
 def login(db: Session, email: str, password: str) -> dict:
     usuario = db.query(Usuario).filter(Usuario.email == email).first()
     if not usuario or not verify_password(password, usuario.password_hash):

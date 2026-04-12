@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import settings
 
 # Construcción de la cadena de conexión para SQL Server
+
 DATABASE_URL = (
     f"mssql+pyodbc://{settings.DB_USER}:{settings.DB_PASSWORD}"
     f"@{settings.DB_SERVER}/{settings.DB_NAME}"
