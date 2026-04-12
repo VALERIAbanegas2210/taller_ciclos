@@ -1,0 +1,78 @@
+<div class="bitacora-wrap">
+
+  <!-- Header -->
+  <div class="bit-header">
+    <div>
+      <div class="bit-label">Registro del sistema</div>
+      <h2 class="bit-title">Bitácora de sesiones</h2>
+    </div>
+    <div class="bit-actions">
+      <button class="btn-refresh" (click)="cargarBitacora()">↻ Actualizar</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" *ngIf="!loading && !error">
+    <div class="stat-box">
+      <div class="stat-num">{{ total }}</div>
+      <div class="stat-lbl">Total registros</div>
+    </div>
+    <div class="stat-box green">
+      <div class="stat-num">{{ totalLogin }}</div>
+      <div class="stat-lbl">Inicios de sesión</div>
+    </div>
+    <div class="stat-box red">
+      <div class="stat-num">{{ totalLogout }}</div>
+      <div class="stat-lbl">Cierres de sesión</div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Cargando bitácora...</span>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" *ngIf="error">⚠ {{ error }}</div>
+
+  <!-- Tabla -->
+  <div class="table-wrap" *ngIf="!loading && !error">
+    <table class="bit-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Acción</th>
+          <th>Fecha y hora</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of registros; let i = index">
+          <td class="td-num">{{ i + 1 }}</td>
+          <td class="td-nombres">{{ r.nombres }}</td>
+          <td class="td-email">{{ r.email }}</td>
+          <td>
+            <span class="badge" [ngClass]="getTipoClass(r.tipo)">
+              {{ r.tipo }}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getAccionClass(r.accion)">
+              {{ r.accion === 'login' ? '▶ Login' : '◼ Logout' }}
+            </span>
+          </td>
+          <td class="td-fecha">{{ formatFecha(r.fecha_hora) }}</td>
+          <td class="td-ip">{{ r.ip || '—' }}</td>
+        </tr>
+        <tr *ngIf="registros.length === 0">
+          <td colspan="7" class="td-empty">No hay registros aún</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
