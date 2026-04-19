@@ -23,3 +23,9 @@ def listar_pendientes(
     if current_user.tipo not in ['tecnico', 'admin']:
         raise HTTPException(status_code=403, detail="No tiene permisos para ver incidentes pendientes")
     return service.get_incidentes_pendientes(db)
+#agregado para mandar al talleres
+
+@router.get("/pendientes")
+def obtener_pendientes(db: Session = Depends(get_db)):
+    return db.query(incidentes).filter(incidentes.estado == "pendiente").all()
+

@@ -1,33 +1,92 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http'; // Importa HttpHeaders
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { isPlatformBrowser } from '@angular/common';
 import { Observable } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root'
-})
+// El backend devuelve descripcion_manual, no descripcion
+// Actualiza la interfaz:
+
+export interface Incidente {
+  id:                 string;
+  descripcion_manual: string | null;   // ← campo real del backend
+  descripcion?:       string;          // ← alias para compatibilidad
+  ubicacion?:         string | null;
+  direccion_texto?:   string | null;
+  categoria:          string;
+  prioridad:          string;
+  estado:             string;
+  created_at:         string;
+  vehiculo?: {
+    marca:   string;
+    modelo:  string;
+    anio:    number;
+    placa:   string;
+    color?:  string | null;
+  };
+  cliente?: {
+    nombres:   string;
+    apellidos: string;
+    email:     string;
+    telefono?: string | null;
+  };
+}
+
+export interface AceptarPayload {
+  incidente_id:        string;
+  taller_id:           string;
+  precio_cotizado:     number;
+  tiempo_estimado_min: number;
+  nota_taller?:        string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class IncidenteService {
-  private apiUrl = 'http://localhost:8000/api';
 
-  constructor(private http: HttpClient) {}
+  private API = 'http://localhost:8000/api';
+  private isBrowser: boolean;
 
-  // Función privada para crear los headers con el Token
-  private getHeaders() {
-    const token = localStorage.getItem('token'); // Asegúrate que el nombre sea 'token'
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
   }
 
+  private get headers(): HttpHeaders {
+    const token = this.isBrowser ? localStorage.getItem('token') : '';
+    return new HttpHeaders().set('Authorization', `Bearer ${token}`);
+  }
+
+  // ── Cliente ───────────────────────────────────────────────────────
   crearIncidente(incidente: any): Observable<any> {
-    // Pasamos los headers como tercer parámetro
-    return this.http.post(`${this.apiUrl}/incidentes/`, incidente, { headers: this.getHeaders() });
+    return this.http.post(
+      `${this.API}/incidentes/`,
+      incidente,
+      { headers: this.headers }
+    );
   }
 
   getIncidentesPendientes(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/incidentes/pendientes`, { headers: this.getHeaders() });
+    return this.http.get<any[]>(
+      `${this.API}/incidentes/pendientes`,
+      { headers: this.headers }
+    );
   }
 
-  aceptarIncidente(asignacion: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/asignaciones/`, asignacion, { headers: this.getHeaders() });
+  // ── Técnico ───────────────────────────────────────────────────────
+  getDisponibles(): Observable<Incidente[]> {
+    return this.http.get<Incidente[]>(
+      `${this.API}/asignaciones/disponibles`,
+      { headers: this.headers }  // ← faltaba el token
+    );
   }
+
+  aceptarIncidente(data: AceptarPayload): Observable<any> {
+    return this.http.post(
+      `${this.API}/asignaciones/`,  // ← faltaba la / al final
+      data,
+      { headers: this.headers }    // ← faltaba el token
+    );
+  }
+  
 }

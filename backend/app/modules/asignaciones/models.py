@@ -27,4 +27,4 @@ class Asignacion(Base):
 
     # Relaciones
     incidente = relationship("Incidente")
-    # taller = relationship("Taller")
+    taller = relationship("Taller")

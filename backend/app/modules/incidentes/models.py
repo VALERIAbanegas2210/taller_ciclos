@@ -42,3 +42,4 @@ class Incidente(Base):
     usuario = relationship("Usuario", back_populates="incidentes")
     # Asegúrate de tener la relación inversa en el modelo de Vehiculo
     # vehiculo = relationship("Vehiculo")
+    vehiculo = relationship("Vehiculo", back_populates="incidentes")

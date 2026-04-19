@@ -19,3 +19,4 @@ class Vehiculo(Base):
     activo      = Column(Boolean,     nullable=False, default=True)
 
     usuario = relationship("Usuario", back_populates="vehiculos")
+    incidentes = relationship("Incidente", back_populates="vehiculo")

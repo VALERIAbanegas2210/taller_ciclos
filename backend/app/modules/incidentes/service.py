@@ -14,3 +14,4 @@ def create_incidente(db: Session, incidente: IncidenteCreate, usuario_id: str):
     db.commit()
     db.refresh(db_incidente)
     return db_incidente
+
