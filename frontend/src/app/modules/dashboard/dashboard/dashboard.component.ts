@@ -4,25 +4,32 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BitacoraComponent } from '../bitacora/bitacora.component';
 import { ReporteComponent } from '../reporte/reporte.component';
+import { PerfilUsuarioComponent } from '../../perfil_usuario/perfilusuario.component';
+import { MisVehiculosComponent } from '../../vehiculos/mis-vehiculos/mis-vehiculos.component';
+import { MiTallerComponent } from '../../taller/mi-taller/mi-taller.component';
+import { ReportarComponent } from '../../incidentes/reportar/reportar.component';
+import { AtenderComponent } from '../../incidentes/atender/atender.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, BitacoraComponent, ReporteComponent],
+  imports: [
+    CommonModule, 
+    BitacoraComponent, 
+    ReporteComponent, 
+    PerfilUsuarioComponent, 
+    MisVehiculosComponent, 
+    MiTallerComponent,
+    ReportarComponent,
+    AtenderComponent
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
+  // 1. Propiedades de la clase
   usuario: any = null;
   seccionActiva = 'inicio';
-
-  menuItems = [
-    { id: 'inicio',    icono: '⊞',  label: 'Inicio' },
-    { id: 'taller',    icono: '🔧', label: 'Taller' },
-    { id: 'pedidos',   icono: '📋', label: 'Pedidos' },
-    { id: 'bitacora',  icono: '📖', label: 'Bitácora' },
-    { id: 'reporte',   icono: '📊', label: 'Reporte' },
-  ];
 
   agenda = [
     { hora: '10:00', fin: '13:00', titulo: 'Cita de vehículo', auto: 'Toyota Corolla' },
@@ -35,9 +42,39 @@ export class DashboardComponent implements OnInit {
     private router: Router
   ) {}
 
+  // 2. Ciclo de vida
   ngOnInit() {
     this.usuario = this.authService.getUsuario();
-    if (!this.usuario) this.router.navigate(['/login']);
+    if (!this.usuario) {
+      this.router.navigate(['/login']);
+    }
+  }
+
+  // 3. Getters para la UI
+  get menuItems() {
+    const items = [
+      { id: 'inicio', icono: '⊞', label: 'Inicio' },
+      { id: 'pedidos', icono: '📋', label: 'Pedidos' },
+    
+      { id: 'reporte', icono: '📊', label: 'Reporte' },
+      { id: 'perfil', icono: '👤', label: 'Mi Perfil' },
+
+    ];
+
+    if (this.usuario?.tipo === 'admin') {
+    items.push({ id: 'bitacora', icono: '📖', label: 'Bitácora' });
+  }
+
+    if (this.usuario?.tipo === 'tecnico' || this.usuario?.tipo === 'admin') {
+    items.push({ id: 'taller', icono: '🔧', label: 'Mi Taller' });
+    items.push({ id: 'atender', icono: '🛠️', label: 'Atender Auxilios' });
+  }
+  if (this.usuario?.tipo === 'cliente') {
+    items.push({ id: 'vehiculos', icono: '🚗', label: 'Mis vehículos' });
+    items.push({ id: 'reportar', icono: '🚨', label: 'Pedir Auxilio' });
+  }
+  return items;
+
   }
 
   get nombreCompleto() {
@@ -50,14 +87,23 @@ export class DashboardComponent implements OnInit {
   }
 
   get iniciales() {
-    if (!this.usuario) return 'U';
-    return `${this.usuario.nombres[0]}${this.usuario.apellidos[0]}`.toUpperCase();
+    if (!this.usuario || !this.usuario.nombres) return 'U';
+    const n = this.usuario.nombres[0] || '';
+    const a = this.usuario.apellidos ? this.usuario.apellidos[0] : '';
+    return `${n}${a}`.toUpperCase();
   }
 
-  setSeccion(id: string) { this.seccionActiva = id; }
+  // 4. Métodos de acción
+  setSeccion(id: string) {
+    this.seccionActiva = id;
+  }
+
+  onPerfilGuardado(usuarioActualizado: any) {
+    this.usuario = { ...this.usuario, ...usuarioActualizado };
+    this.authService.setUsuario(this.usuario); // guarda en localStorage
+  }
 
   logout() {
-    // Llamar al endpoint de logout para registrar en bitácora
     const token = localStorage.getItem('token');
     if (token) {
       fetch('http://localhost:8000/api/usuarios/logout', {

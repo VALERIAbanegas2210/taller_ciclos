@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, Boolean, Text
 from sqlalchemy.dialects.mssql import UNIQUEIDENTIFIER
 from app.database import Base
 import uuid
-
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 class Usuario(Base):
     __tablename__ = "usuarios"
@@ -17,4 +17,9 @@ class Usuario(Base):
     tipo          = Column(String(10), nullable=False, default="cliente")  # cliente|admin|taller|tecnico
     activo        = Column(Boolean, nullable=False, default=True)
     foto_perfil_url = Column(Text, nullable=True)
+    import uuid
+
+    vehiculos = relationship("Vehiculo", back_populates="usuario", cascade="all, delete")
+    incidentes = relationship("Incidente", back_populates="usuario")
+
 

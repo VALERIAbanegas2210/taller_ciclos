@@ -1,0 +1,240 @@
+<div class="taller-wrap">
+
+  <!-- CABECERA -->
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Mi taller</h2>
+      <p class="page-sub">Gestiona la información de tu taller mecánico</p>
+    </div>
+    <div class="status-bar" *ngIf="taller">
+      <span class="badge" [ngClass]="taller.activo ? 'badge-activo' : 'badge-inactivo'">
+        {{ taller.activo ? 'Activo' : 'Inactivo' }}
+      </span>
+      <span class="badge" [ngClass]="taller.verificado ? 'badge-verificado' : 'badge-pendiente'">
+        {{ taller.verificado ? 'Verificado' : 'Pendiente verificación' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- ── MODO REGISTRO ─────────────────────────────── -->
+  <ng-container *ngIf="modoRegistro">
+
+    <div class="taller-card aviso-card">
+      <div class="aviso-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 8v4M12 16h.01"/>
+        </svg>
+      </div>
+      <div>
+        <p class="aviso-title">Aún no tienes un taller registrado</p>
+        <p class="aviso-sub">Completa el formulario para registrar tu taller en la plataforma.</p>
+      </div>
+    </div>
+
+    <!-- Logo -->
+    <div class="taller-card">
+      <div class="section-label">Logo del taller</div>
+      <div class="logo-zone">
+        <div class="logo-preview" (click)="logoInputReg.click()">
+          <img *ngIf="logoPreview" [src]="logoPreview" alt="logo">
+          <div *ngIf="!logoPreview" class="logo-ph">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="3"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <path d="M21 15l-5-5L5 21"/>
+            </svg>
+            <span>Sin logo</span>
+          </div>
+        </div>
+        <input #logoInputReg type="file" accept="image/*" style="display:none" (change)="handleLogo($event)">
+        <div class="logo-info">
+          <p>Logo del taller</p>
+          <span>PNG, JPG o WEBP · máx 5 MB</span>
+          <button type="button" class="btn-logo" (click)="logoInputReg.click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Subir logo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datos registro -->
+    <div class="taller-card">
+      <div class="section-label">Información general</div>
+      <div class="grid2">
+        <div class="field full">
+          <label>Nombre del taller <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="regForm.nombre" placeholder="AutoWorks Taller Mecánico">
+        </div>
+        <div class="field">
+          <label>Correo electrónico <span class="req">*</span></label>
+          <input type="email" [(ngModel)]="regForm.email" placeholder="taller@ejemplo.com">
+        </div>
+        <div class="field">
+          <label>Teléfono</label>
+          <input type="tel" [(ngModel)]="regForm.telefono" placeholder="+591 7xxxxxxx">
+        </div>
+        <div class="field full">
+          <label>Contraseña <span class="req">*</span></label>
+          <input type="password" [(ngModel)]="regForm.password" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="field full">
+          <label>Dirección</label>
+          <input type="text" [(ngModel)]="regForm.direccion" placeholder="Av. Principal #123">
+        </div>
+        <div class="field full">
+          <label>Descripción</label>
+          <textarea [(ngModel)]="regForm.descripcion"
+            placeholder="Describe los servicios que ofreces, especialidades, años de experiencia..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cobertura -->
+    <div class="taller-card">
+      <div class="section-label">Cobertura y ubicación</div>
+      <div class="field">
+        <label>Radio de servicio</label>
+        <div class="radio-wrap">
+          <input type="range" min="1" max="100" step="1"
+                 [(ngModel)]="regForm.radio_servicio_km">
+          <span class="radio-val">{{ regForm.radio_servicio_km }} km</span>
+        </div>
+      </div>
+      <div class="coords">
+        <div class="field">
+          <label>Latitud</label>
+          <input type="number" [(ngModel)]="regForm.latitud" placeholder="-17.7863" step="0.0001">
+        </div>
+        <div class="field">
+          <label>Longitud</label>
+          <input type="number" [(ngModel)]="regForm.longitud" placeholder="-63.1812" step="0.0001">
+        </div>
+      </div>
+    </div>
+
+    <p *ngIf="error" class="msg msg-error">{{ error }}</p>
+    <p *ngIf="exito" class="msg msg-ok">{{ exito }}</p>
+
+    <div class="actions">
+      <button type="button" class="btn-save" [disabled]="cargando" (click)="registrar()">
+        {{ cargando ? 'Registrando...' : 'Registrar taller' }}
+      </button>
+    </div>
+
+  </ng-container>
+
+  <!-- ── MODO EDICIÓN ──────────────────────────────── -->
+  <ng-container *ngIf="!modoRegistro && taller">
+
+    <!-- Logo -->
+    <div class="taller-card">
+      <div class="section-label">Logo del taller</div>
+      <div class="logo-zone">
+        <div class="logo-preview" (click)="logoInputEdit.click()">
+          <img *ngIf="logoPreview" [src]="logoPreview" alt="logo">
+          <div *ngIf="!logoPreview" class="logo-initials">{{ iniciales }}</div>
+          <div class="logo-overlay">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-1.94c.04-.32.07-.64.07-.96s-.03-.66-.07-1l2.11-1.63a.5.5 0 0 0 .12-.64l-2-3.46a.49.49 0 0 0-.61-.22l-2.49 1a7.4 7.4 0 0 0-1.69-.98l-.38-2.65A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64L4.57 11a7 7 0 0 0-.07.96c0 .33.03.65.07.96L2.46 14.58a.5.5 0 0 0-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1.01c.22.08.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.66z"/>
+            </svg>
+          </div>
+        </div>
+        <input #logoInputEdit type="file" accept="image/*" style="display:none" (change)="handleLogo($event)">
+        <div class="logo-info">
+          <p>{{ taller.nombre }}</p>
+          <span>PNG, JPG o WEBP · máx 5 MB</span>
+          <button type="button" class="btn-logo" (click)="logoInputEdit.click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Cambiar logo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datos edición -->
+    <div class="taller-card">
+      <div class="section-label">Información general</div>
+      <div class="grid2">
+        <div class="field full">
+          <label>Nombre del taller <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="editForm.nombre">
+        </div>
+        <div class="field">
+          <label>Teléfono</label>
+          <input type="tel" [(ngModel)]="editForm.telefono">
+        </div>
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="text" [value]="taller.email" disabled class="input-disabled">
+        </div>
+        <div class="field full">
+          <label>Dirección</label>
+          <input type="text" [(ngModel)]="editForm.direccion">
+        </div>
+        <div class="field full">
+          <label>Descripción</label>
+          <textarea [(ngModel)]="editForm.descripcion"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cobertura -->
+    <div class="taller-card">
+      <div class="section-label">Cobertura y ubicación</div>
+      <div class="field">
+        <label>Radio de servicio</label>
+        <div class="radio-wrap">
+          <input type="range" min="1" max="100" step="1"
+                 [(ngModel)]="editForm.radio_servicio_km">
+          <span class="radio-val">{{ editForm.radio_servicio_km }} km</span>
+        </div>
+      </div>
+      <div class="coords">
+        <div class="field">
+          <label>Latitud</label>
+          <input type="number" [(ngModel)]="editForm.latitud" placeholder="-17.7863" step="0.0001">
+        </div>
+        <div class="field">
+          <label>Longitud</label>
+          <input type="number" [(ngModel)]="editForm.longitud" placeholder="-63.1812" step="0.0001">
+        </div>
+      </div>
+    </div>
+
+    <!-- Info cuenta -->
+    <div class="taller-card">
+      <div class="section-label">Información de cuenta</div>
+      <div class="info-row"><span class="info-label">Comisión plataforma</span><span class="info-val">{{ taller.comision_pct }}%</span></div>
+      <div class="info-row"><span class="info-label">Estado</span>
+        <span class="badge" [ngClass]="taller.activo ? 'badge-activo' : 'badge-inactivo'">
+          {{ taller.activo ? 'Activo' : 'Inactivo' }}
+        </span>
+      </div>
+      <div class="info-row"><span class="info-label">Verificación</span>
+        <span class="badge" [ngClass]="taller.verificado ? 'badge-verificado' : 'badge-pendiente'">
+          {{ taller.verificado ? 'Verificado' : 'Pendiente' }}
+        </span>
+      </div>
+    </div>
+
+    <p *ngIf="error" class="msg msg-error">{{ error }}</p>
+    <p *ngIf="exito" class="msg msg-ok">{{ exito }}</p>
+
+    <div class="actions">
+      <button type="button" class="btn-cancel" (click)="cancelar()">Cancelar</button>
+      <button type="button" class="btn-save" [disabled]="cargando" (click)="guardar()">
+        {{ cargando ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+
+  </ng-container>
+
+</div>

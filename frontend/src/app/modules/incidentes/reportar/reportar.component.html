@@ -1,0 +1,65 @@
+<div class="report-container">
+  <div class="report-header">
+    <h2>🚨 Solicitar Auxilio Mecánico</h2>
+    <p>Cuéntanos qué pasó y un taller cercano acudirá en tu ayuda.</p>
+  </div>
+
+  <form [formGroup]="incidenteForm" (ngSubmit)="enviarIncidente()" class="report-form">
+    
+    <div class="form-group">
+      <label>¿En qué vehículo te encuentras?</label>
+      <select formControlName="vehiculo_id" class="form-input" 
+              [class.error]="incidenteForm.get('vehiculo_id')?.invalid && incidenteForm.get('vehiculo_id')?.touched">
+        <option value="" disabled selected>Selecciona tu vehículo</option>
+        <option *ngFor="let v of misVehiculos" [value]="v.id">
+          {{ v.placa }} - {{ v.marca }} {{ v.modelo }}
+        </option>
+      </select>
+      <small class="error-text" *ngIf="incidenteForm.get('vehiculo_id')?.invalid && incidenteForm.get('vehiculo_id')?.touched">
+        Debes seleccionar un vehículo para continuar.
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label>¿Cuál es el problema?</label>
+      <select formControlName="categoria" class="form-input">
+        <option value="bateria">Falla de Batería</option>
+        <option value="llanta">Llanta Pinchada</option>
+        <option value="motor">Problemas de Motor</option>
+        <option value="choque">Choque / Colisión</option>
+        <option value="otro">Otro / No lo sé</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Descripción del incidente</label>
+      <textarea 
+        formControlName="descripcion_manual" 
+        placeholder="Ej: El auto no arranca y sale humo blanco..."
+        rows="3"
+        class="form-input">
+      </textarea>
+    </div>
+
+    <div class="form-group">
+      <label>📍 Confirma tu ubicación en el mapa (puedes mover la flecha)</label>
+      <div id="map" style="height: 250px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 5px;"></div>
+      <input type="text" formControlName="ubicacion" class="form-input" readonly 
+             style="background: #f0f0f0; font-size: 0.8rem;" placeholder="Coordenadas GPS">
+    </div>
+
+    <div class="form-group">
+      <label>Referencia o Dirección escrita</label>
+      <input 
+        type="text"
+        formControlName="direccion_texto" 
+        placeholder="Ej: Av. Banzer entre 3er y 4to anillo"
+        class="form-input"
+        [class.error]="incidenteForm.get('direccion_texto')?.invalid && incidenteForm.get('direccion_texto')?.touched">
+    </div>
+
+    <button type="submit" class="btn-submit" [disabled]="incidenteForm.invalid || cargando">
+      {{ cargando ? 'ENVIANDO SOLICITUD...' : 'ENVIAR SOLICITUD DE AUXILIO' }}
+    </button>
+  </form>
+</div>

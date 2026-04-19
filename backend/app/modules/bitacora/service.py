@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
-from app.modules.bitacora.model import Bitacora
+from app.modules.bitacora.models import Bitacora
 from app.modules.usuarios.models import Usuario
 import uuid
 

@@ -149,15 +149,27 @@
         <app-reporte></app-reporte>
       </ng-container>
 
-      <!-- OTRAS SECCIONES -->
-      <ng-container *ngIf="seccionActiva !== 'inicio' && seccionActiva !== 'bitacora' && seccionActiva !== 'reporte'">
-        <div class="empty-section">
-          <div class="empty-icon">🚧</div>
-          <div class="empty-title">{{ seccionActiva | titlecase }}</div>
-          <div class="empty-sub">Esta sección está en desarrollo</div>
-        </div>
+      <!-- PERFIL -->
+      <ng-container *ngIf="seccionActiva === 'perfil'">
+        <app-perfil-usuario
+          [usuario]="usuario"
+          (onGuardado)="onPerfilGuardado($event)"
+        ></app-perfil-usuario>
       </ng-container>
 
+      <ng-container *ngIf="seccionActiva === 'vehiculos'">
+         <app-mis-vehiculos></app-mis-vehiculos>
+      </ng-container>
+
+      <ng-container *ngIf="seccionActiva === 'taller'">
+         <app-mi-taller></app-mi-taller>
+      </ng-container>
+
+      <ng-container *ngIf="seccionActiva === 'reportar'">
+       <app-reportar-incidente></app-reportar-incidente>
+      </ng-container>
+
+ 
     </div>
   </main>
 </div>

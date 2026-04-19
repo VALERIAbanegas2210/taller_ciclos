@@ -1,0 +1,30 @@
+<div class="atender-container">
+  <div class="header">
+    <h2>🛠️ Auxilios Pendientes</h2>
+    <span class="badge">{{ incidentes.length }} disponibles</span>
+  </div>
+
+  <div class="grid-incidentes">
+    <div *ngFor="let inc of incidentes" class="card-incidente">
+      <div class="card-body">
+        <div class="category-tag" [ngClass]="inc.categoria">
+          {{ inc.categoria }}
+        </div>
+        <h3>{{ inc.direccion_texto }}</h3>
+        <p>{{ inc.descripcion_manual }}</p>
+        <div class="meta">
+          <span>📅 {{ inc.created_at | date:'shortTime' }}</span>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button (click)="aceptarCaso(inc.id)" class="btn-atender">
+          Atender Ahora
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="incidentes.length === 0" class="empty-state">
+    <p>No hay emergencias reportadas en este momento.</p>
+  </div>
+</div>

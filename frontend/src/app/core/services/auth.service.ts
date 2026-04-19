@@ -2,13 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-interface UsuarioOut {
+export interface UsuarioOut {
   id: string;
   nombres: string;
   apellidos: string;
   email: string;
   telefono: string | null;
-  tipo: string; // 'admin' | 'cliente' | 'tecnico'
+  tipo: string;
   activo: boolean;
   foto_perfil_url: string | null;
 }
@@ -32,8 +32,7 @@ interface RegistroPayload {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
-
-  private API_URL = 'http://localhost:8000/api/usuarios'; // ← corregido
+  private API_URL = 'http://localhost:8000/api/usuarios';
 
   constructor(private http: HttpClient) {}
 
@@ -50,6 +49,11 @@ export class AuthService {
     localStorage.setItem('refresh_token', res.refresh_token);
     localStorage.setItem('rol', res.usuario.tipo);
     localStorage.setItem('usuario', JSON.stringify(res.usuario));
+  }
+
+  // ← nuevo: actualiza el usuario en localStorage sin tocar token ni rol
+  setUsuario(usuario: UsuarioOut) {
+    localStorage.setItem('usuario', JSON.stringify(usuario));
   }
 
   logout()                    { localStorage.clear(); }

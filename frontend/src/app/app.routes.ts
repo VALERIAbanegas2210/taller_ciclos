@@ -43,6 +43,7 @@ export const routes: Routes = [
       import('./modules/dashboard/dashboard/dashboard.component')
         .then(m => m.DashboardComponent)
   },
+  
   {
     path: '**',
     redirectTo: ''
