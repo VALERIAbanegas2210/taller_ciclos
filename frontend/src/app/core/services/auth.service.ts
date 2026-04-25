@@ -11,6 +11,7 @@ export interface UsuarioOut {
   tipo: string;
   activo: boolean;
   foto_perfil_url: string | null;
+  taller_id: string | null;  // ← necesario para técnicos
 }
 
 interface LoginResponse {
@@ -27,11 +28,11 @@ interface RegistroPayload {
   telefono?: string;
   password: string;
   tipo: string;
+  taller_id?: string;  // ← al registrar un técnico
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-
   private API_URL = 'http://localhost:8000/api/usuarios';
 
   constructor(private http: HttpClient) {}
@@ -45,13 +46,12 @@ export class AuthService {
   }
 
   saveSession(res: LoginResponse) {
-    localStorage.setItem('token', res.access_token);
+    localStorage.setItem('token',         res.access_token);
     localStorage.setItem('refresh_token', res.refresh_token);
-    localStorage.setItem('rol', res.usuario.tipo);
-    localStorage.setItem('usuario', JSON.stringify(res.usuario));
+    localStorage.setItem('rol',           res.usuario.tipo);
+    localStorage.setItem('usuario',       JSON.stringify(res.usuario));
   }
 
-  // ← nuevo: actualiza el usuario en localStorage sin tocar token ni rol
   setUsuario(usuario: UsuarioOut) {
     localStorage.setItem('usuario', JSON.stringify(usuario));
   }

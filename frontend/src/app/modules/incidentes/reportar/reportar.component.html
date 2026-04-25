@@ -20,6 +20,35 @@
       </small>
     </div>
 
+    <div class="card bg-light mb-4">
+      <div class="card-body">
+        <label class="form-label fw-bold">
+          <i class="bi bi-camera-fill me-2"></i>Evidencia del Incidente
+        </label>
+        
+        <input 
+          type="file" 
+          #fileInput
+          (change)="onFileSelected($event)" 
+          accept="image/*"
+          capture="environment" 
+          style="display: none;">
+
+        <div class="d-flex gap-2 align-items-center">
+          <button type="button" class="btn btn-outline-secondary" (click)="fileInput.click()">
+            <i class="bi bi-upload"></i> Seleccionar o Tomar Foto
+          </button>
+          <span class="text-muted small" *ngIf="!fotoSeleccionada">JPG, PNG, WEBP</span>
+          <span class="text-success small fw-bold" *ngIf="fotoSeleccionada">¡Imagen cargada!</span>
+        </div>
+
+        <div *ngIf="imagePreview" class="mt-3 text-center">
+          <img [src]="imagePreview" class="img-thumbnail shadow-sm" style="max-height: 180px;" alt="Vista previa">
+          <button type="button" class="btn btn-sm btn-danger d-block mx-auto mt-2" (click)="resetearTodo()">Quitar foto</button>
+        </div>
+      </div>
+    </div>
+
     <div class="form-group">
       <label>¿Cuál es el problema?</label>
       <select formControlName="categoria" class="form-input">
@@ -33,19 +62,37 @@
 
     <div class="form-group">
       <label>Descripción del incidente</label>
-      <textarea 
-        formControlName="descripcion_manual" 
-        placeholder="Ej: El auto no arranca y sale humo blanco..."
-        rows="3"
-        class="form-input">
-      </textarea>
+      <div class="input-group">
+        <textarea 
+          class="form-control form-input" 
+          formControlName="descripcion_manual" 
+          rows="3" 
+          placeholder="Ej: El auto no arranca y sale humo blanco...">
+        </textarea>
+
+
+       <button 
+          type="button" 
+          class="btn-voice" 
+          [class.listening-active]="isListening"
+          (click)="toggleDictado()"
+          [title]="isListening ? 'Detener dictado' : 'Dictar por voz'">
+          
+          <i class="bi" [ngClass]="isListening ? 'bi-stop-circle-fill' : 'bi-mic-fill'"></i>
+          
+          <span *ngIf="isListening" class="recording-text">Grabando</span>
+        </button>
+
+
+
+      </div>
     </div>
 
     <div class="form-group">
-      <label>📍 Confirma tu ubicación en el mapa (puedes mover la flecha)</label>
-      <div id="map" style="height: 250px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 5px;"></div>
+      <label>📍 Ubicación exacta (Arrastra el marcador)</label>
+      <div id="map" style="height: 250px; width: 100%; border-radius: 8px; margin-bottom: 5px;"></div>
       <input type="text" formControlName="ubicacion" class="form-input" readonly 
-             style="background: #f0f0f0; font-size: 0.8rem;" placeholder="Coordenadas GPS">
+             style="background: #f0f0f0; font-size: 0.85rem; border-style: dashed;" placeholder="Coordenadas GPS">
     </div>
 
     <div class="form-group">
@@ -59,7 +106,7 @@
     </div>
 
     <button type="submit" class="btn-submit" [disabled]="incidenteForm.invalid || cargando">
-      {{ cargando ? 'ENVIANDO SOLICITUD...' : 'ENVIAR SOLICITUD DE AUXILIO' }}
+      {{ cargando ? 'PROCESANDO...' : 'ENVIAR SOLICITUD DE AUXILIO' }}
     </button>
   </form>
 </div>

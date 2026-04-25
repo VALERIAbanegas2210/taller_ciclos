@@ -8,6 +8,10 @@ from app.modules.bitacora.router import router as bitacora_router
 from app.modules.vehiculos.router import router as vehiculos_router
 from app.database import engine
 from app.modules.talleres.router import router as talleres_router
+
+# main.py
+from app.modules.incidentes.router import router as incidentes_router
+
 app = FastAPI(
     title="Taller API",
     description="Backend para sistema de asistencia vehicular",
@@ -17,11 +21,12 @@ app = FastAPI(
 # ── CORS ──────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(usuarios_router, prefix="/api")
@@ -30,6 +35,7 @@ app.include_router(vehiculos_router, prefix="/api")
 app.include_router(incidentes_router,prefix="/api")
 app.include_router(talleres_router, prefix="/api")
 app.include_router(asignaciones_router,prefix="/api")
+
 # ── Archivos estáticos (fotos de perfil) ──────────────────────────────────────
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

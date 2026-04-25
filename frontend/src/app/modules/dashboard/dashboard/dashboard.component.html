@@ -170,9 +170,13 @@
       </ng-container>
 
       <ng-container *ngIf="seccionActiva === 'atender'">
-       <app-atender-incidente></app-atender-incidente>
+        <app-atender></app-atender>
+       
       </ng-container>
 
+      <ng-container *ngIf="seccionActiva === 'historial'">
+        <app-historial-tecnico ></app-historial-tecnico>
+      </ng-container>
 
  
     </div>

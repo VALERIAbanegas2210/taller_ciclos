@@ -69,7 +69,8 @@ def login(db: Session, email: str, password: str) -> dict:
     if not usuario.activo:
         raise HTTPException(status_code=403, detail="Cuenta desactivada")
 
-    payload = {"sub": str(usuario.id), "tipo": usuario.tipo}
+    payload = {"sub": str(usuario.id), "tipo": usuario.tipo , "taller_id": str(usuario.taller_id) if usuario.taller_id else None 
+               }
     return {
         "access_token":  create_access_token(payload),
         "refresh_token": create_refresh_token(payload),
@@ -86,7 +87,7 @@ def refresh_token(db: Session, token: str) -> dict:
     if not usuario or not usuario.activo:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
 
-    new_payload = {"sub": str(usuario.id), "tipo": usuario.tipo}
+    new_payload = {"sub": str(usuario.id), "tipo": usuario.tipo ,"taller_id": str(usuario.taller_id) if usuario.taller_id else None}
     return {
         "access_token":  create_access_token(new_payload),
         "refresh_token": create_refresh_token(new_payload),

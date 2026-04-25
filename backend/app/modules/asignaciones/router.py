@@ -1,27 +1,67 @@
-from fastapi import APIRouter, Depends, HTTPException
+from uuid import UUID
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
-from app.dependencies import get_db, get_current_user
+
+from app.database    import get_db
+from app.dependencies import require_roles
 from . import service, schema
 
 router = APIRouter(prefix="/asignaciones", tags=["asignaciones"])
 
-@router.post("/", response_model=schema.AsignacionResponse)
-def crear_asignacion(
-    asignacion: schema.AsignacionCreate,
+
+# ── CASOS DISPONIBLES ────────────────────────────────────────────────────────
+
+@router.get("/disponibles", response_model=list[schema.AsignacionOut])
+def casos_disponibles(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(require_roles("tecnico"))
 ):
-    if current_user.tipo not in ['tecnico', 'admin']:
-        raise HTTPException(status_code=403, detail="Solo técnicos pueden atender incidentes")
-    return service.atender_incidente(db, asignacion, current_user.id)
+    if not current_user.taller_id:
+        raise HTTPException(status_code=400, detail="Técnico sin taller asignado")
+    return service.get_casos_disponibles(db, current_user.taller_id)
 
 
-@router.get("/disponibles", response_model=List[schema.IncidenteDisponibleOut])
-def ver_disponibles(
+# ── ACEPTAR CASO ─────────────────────────────────────────────────────────────
+
+@router.patch("/{asignacion_id}/aceptar")
+def aceptar_caso(
+    asignacion_id: UUID,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(require_roles("tecnico"))
 ):
-    if current_user.tipo not in ['tecnico', 'admin']:
-        raise HTTPException(status_code=403, detail="No autorizado")
-    return service.obtener_disponibles(db)
+    resultado = service.aceptar_caso(db, asignacion_id, current_user.id)
+    if not resultado:
+        raise HTTPException(status_code=409, detail="Este caso ya fue tomado")
+    return {"mensaje": "Caso aceptado", "asignacion_id": str(resultado.id)}
+
+
+# ── HISTORIAL DEL TÉCNICO ─────────────────────────────────────────────────────
+# estado: pendientes | proceso | terminados | None (todos)
+
+@router.get("/mi-historial", response_model=list[schema.CasoHistorialOut])
+def historial_tecnico(
+    estado: Optional[str] = Query(None, description="pendientes | proceso | terminados"),
+    db: Session = Depends(get_db),
+    current_user=Depends(require_roles("tecnico"))
+):
+    return service.get_historial_tecnico(db, current_user.id, estado)
+
+
+# ── CAMBIAR ESTADO ────────────────────────────────────────────────────────────
+
+@router.patch("/{asignacion_id}/estado")
+def cambiar_estado(
+    asignacion_id: UUID,
+    data: schema.CambiarEstadoRequest,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_roles("tecnico"))
+):
+    resultado = service.cambiar_estado(
+        db                 = db,
+        asignacion_id      = asignacion_id,
+        nuevo_estado       = data.nuevo_estado,
+        tecnico_usuario_id = current_user.id,
+        nota               = data.nota,
+    )
+    return {"mensaje": f"Estado actualizado a '{resultado.estado}'", "estado": resultado.estado}

@@ -32,7 +32,7 @@ export interface Incidente {
 }
 
 export interface AceptarPayload {
-  incidente_id:        string;
+  incidente_id:        string | number;
   taller_id:           string;
   precio_cotizado:     number;
   tiempo_estimado_min: number;

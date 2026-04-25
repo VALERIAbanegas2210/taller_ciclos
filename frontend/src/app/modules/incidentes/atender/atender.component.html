@@ -1,175 +1,253 @@
-<div class="atender-wrap">
+<!-- ══════════════════════════════════════════════════
+     ATENDER AUXILIOS — Lista + Modal de detalle
+     ══════════════════════════════════════════════════ -->
 
-  <div class="page-header">
-    <div>
-      <h2 class="page-title">Incidentes disponibles</h2>
-      <p class="page-sub">Casos pendientes que puedes aceptar y atender</p>
+<div class="atender-wrapper">
+
+  <!-- HEADER -->
+  <div class="atender-header">
+    <div class="header-left">
+      <span class="header-icon">🔧</span>
+      <div>
+        <h2>Auxilios Disponibles</h2>
+        <p>Selecciona un caso para atenderlo</p>
+      </div>
     </div>
-    <button class="btn-refresh" (click)="cargar()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-      </svg>
-      Actualizar
+    <button class="btn-refresh" (click)="cargar()" [disabled]="cargando()">
+      <span [class.spin]="cargando()">↻</span> Actualizar
     </button>
   </div>
 
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-label">Disponibles</div>
-      <div class="stat-val blue">{{ totalDisponibles }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Aceptados por mí</div>
-      <div class="stat-val">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Completados</div>
-      <div class="stat-val green">—</div>
-    </div>
-  </div>
+  <!-- MENSAJES -->
+  <div class="alert alert-success" *ngIf="mensaje()">{{ mensaje() }}</div>
+  <div class="alert alert-error"   *ngIf="error()">⚠️ {{ error() }}</div>
 
-  <div class="tabs">
-    <button class="tab" [class.active]="tabActiva === 'pendientes'" (click)="setTab('pendientes')">
-      Pendientes <span class="tab-count">{{ totalDisponibles }}</span>
+  <!-- FILTROS -->
+  <div class="filtros" *ngIf="casos().length > 0">
+    <button
+      class="filtro-btn"
+      [class.active]="filtroCategoria() === ''"
+      (click)="setFiltro('')">
+      Todos <span class="count">{{ casos().length }}</span>
     </button>
-    <button class="tab" [class.active]="tabActiva === 'mis-casos'" (click)="setTab('mis-casos')">
-      Mis casos
+    <button
+      *ngFor="let cat of categorias()"
+      class="filtro-btn"
+      [class.active]="filtroCategoria() === cat"
+      (click)="setFiltro(cat)">
+      {{ cat | titlecase }}
     </button>
   </div>
 
-  <p *ngIf="error" class="msg msg-error">{{ error }}</p>
-  <p *ngIf="exito" class="msg msg-ok">{{ exito }}</p>
-
-  <div *ngIf="cargando" class="loading-row">
+  <!-- LOADING -->
+  <div class="loading-state" *ngIf="cargando()">
     <div class="spinner"></div>
-    Cargando incidentes...
+    <p>Cargando casos disponibles...</p>
   </div>
 
-  <div class="inc-list" *ngIf="!cargando && tabActiva === 'pendientes'">
+  <!-- EMPTY -->
+  <div class="empty-state" *ngIf="!cargando() && casosFiltrados().length === 0">
+    <span class="empty-icon">🎉</span>
+    <p>No hay casos disponibles en este momento.</p>
+  </div>
 
-    <div class="empty-state" *ngIf="incidentes.length === 0">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 8v4M12 16h.01"/>
-      </svg>
-      <p>No hay incidentes disponibles en este momento</p>
-      <button class="btn-refresh" (click)="cargar()">Verificar de nuevo</button>
+  <!-- GRID DE CASOS -->
+  <div class="casos-grid" *ngIf="!cargando()">
+    <div
+      class="caso-card"
+      *ngFor="let caso of casosFiltrados(); trackBy: trackById">
+
+      <!-- Badges -->
+      <div class="caso-badges">
+        <span class="badge badge--cat">{{ caso.categoria | uppercase }}</span>
+        <span class="badge" [class]="prioridadClass(caso.prioridad)">
+          {{ caso.prioridad | uppercase }}
+        </span>
+        <span class="caso-fecha">{{ caso.created_at | date:'dd/MM HH:mm' }}</span>
+      </div>
+
+      <!-- Vehículo -->
+      <div class="caso-vehiculo">
+        <span class="vehiculo-icon">🚗</span>
+        <div>
+          <strong>{{ caso.marca_vehiculo }} {{ caso.modelo_vehiculo }}</strong>
+          <span class="placa">{{ caso.placa }}</span>
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      <p class="caso-desc">{{ caso.descripcion_manual }}</p>
+
+      <!-- Ubicación y distancia -->
+      <div class="caso-meta">
+        <span *ngIf="caso.direccion_texto">
+          📍 {{ caso.direccion_texto }}
+        </span>
+        <span *ngIf="caso.distancia_km" class="distancia">
+          🛣️ {{ caso.distancia_km | number:'1.1-1' }} km
+        </span>
+      </div>
+
+      <!-- Botones -->
+      <div class="caso-actions">
+        <button
+          class="btn-ver"
+          (click)="verDetalle(caso)">
+          🔍 Ver detalle
+        </button>
+        <button
+          class="btn-aceptar"
+          (click)="aceptar(caso.asignacion_id)"
+          [disabled]="aceptando() === caso.asignacion_id">
+          {{ aceptando() === caso.asignacion_id ? '⏳ Aceptando...' : '✅ Aceptar caso' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL DE DETALLE
+     ══════════════════════════════════════════════════ -->
+
+<div class="modal-overlay" *ngIf="modalAbierto()" (click)="cerrarModal()">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h3>📋 Detalle del Caso</h3>
+      <button class="modal-close" (click)="cerrarModal()">✕</button>
     </div>
 
-    <div class="inc-card"
-         *ngFor="let inc of incidentes"
-         [ngClass]="{
-           'urgencia-alta':  inc.prioridad === 'alta',
-           'urgencia-media': inc.prioridad === 'media',
-           'urgencia-baja':  inc.prioridad === 'baja' || !inc.prioridad
-         }">
+    <!-- Modal Loading -->
+    <div class="modal-loading" *ngIf="cargandoDetalle()">
+      <div class="spinner"></div>
+      <p>Cargando detalle...</p>
+    </div>
 
-      <div class="inc-header">
-        <div>  
-          <div class="inc-title">
-            {{ inc.descripcion_manual ? (inc.descripcion_manual | slice:0:60) : 'Sin descripción' }}
-            {{ (inc.descripcion_manual?.length ?? 0) > 60 ? '...' : '' }}
+    <!-- Modal Content -->
+    <div class="modal-body" *ngIf="detalleCaso() as d">
+
+      <!-- ESTADO + PRIORIDAD -->
+      <div class="detail-badges">
+        <span class="badge badge--cat">{{ d.categoria | uppercase }}</span>
+        <span class="badge" [class]="prioridadClass(d.prioridad)">
+          {{ d.prioridad | uppercase }}
+        </span>
+        <span class="badge badge--estado">{{ d.estado | uppercase }}</span>
+      </div>
+
+      <!-- DESCRIPCIÓN -->
+      <div class="detail-section">
+        <h4 class="detail-title">📝 Descripción del problema</h4>
+        <p class="detail-text">{{ d.descripcion_manual }}</p>
+      </div>
+      <!-- RESUMEN DE IA -->
+      <div class="detail-section ia-section" *ngIf="d.resumen_ia">
+        <h4 class="detail-title ia-title">
+          🤖 Análisis de IA
+          <span class="confianza-badge" *ngIf="d.confianza_ia">
+            {{ (d.confianza_ia * 100) | number:'1.0-0' }}% confianza
+          </span>
+          <span class="revision-badge" *ngIf="d.requiere_revision">
+            ⚠️ Requiere revisión
+          </span>
+        </h4>
+        <p class="ia-resumen">{{ d.resumen_ia }}</p>
+      </div>
+
+      <!-- FOTO EVIDENCIA -->
+      <div class="detail-section" *ngIf="d.foto_evidencia">
+        <h4 class="detail-title">📷 Foto del incidente</h4>
+        <div class="foto-wrapper">
+          <img
+            [src]="getFotoUrl(d.foto_evidencia)"
+            alt="Evidencia del incidente"
+            class="foto-evidencia"
+            (error)="$any($event.target).style.display='none'"
+          />
+        </div>
+      </div>
+
+      <!-- MAPA -->
+      <div class="detail-section" *ngIf="d.ubicacion && d.ubicacion !== '0,0'">
+        <h4 class="detail-title">
+          📍 Ubicación del cliente
+          <span *ngIf="d.distancia_km" class="distancia-badge">
+            🛣️ {{ d.distancia_km | number:'1.1-1' }} km de tu taller
+          </span>
+        </h4>
+        <div id="modal-map"></div>
+        <p class="direccion-ref" *ngIf="d.direccion_texto">
+          📌 Referencia: {{ d.direccion_texto }}
+        </p>
+      </div>
+
+      <!-- SIN UBICACIÓN -->
+      <div class="detail-section" *ngIf="!d.ubicacion || d.ubicacion === '0,0'">
+        <h4 class="detail-title">📍 Ubicación</h4>
+        <p class="detail-muted">📌 {{ d.direccion_texto || 'Sin ubicación registrada' }}</p>
+      </div>
+
+      <!-- VEHÍCULO -->
+      <div class="detail-section" *ngIf="d.vehiculo">
+        <h4 class="detail-title">🚗 Vehículo</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="item-label">Marca / Modelo</span>
+            <span class="item-value">{{ d.vehiculo.marca }} {{ d.vehiculo.modelo }}</span>
           </div>
-          <div class="inc-id">#{{ inc.id.slice(0,8).toUpperCase() }}</div>
-        </div>
-        <div class="inc-badges">
-          <span class="badge" [ngClass]="{
-            'badge-alta':   inc.prioridad === 'alta',
-            'badge-media':  inc.prioridad === 'media',
-            'badge-baja':   inc.prioridad === 'baja' || !inc.prioridad
-          }">{{ inc.prioridad || 'normal' }}</span>
-          <span class="badge badge-pendiente">Pendiente</span>
-        </div>
-      </div>
-
-      <div class="inc-desc">
-        {{ inc.descripcion_manual || inc.descripcion || 'Sin descripción registrada' }}
-      </div>
-
-      <div class="inc-body">
-        <div class="inc-field" *ngIf="inc.vehiculo">
-          <div class="inc-field-label">Vehículo</div>
-          <div class="inc-field-val">{{ inc.vehiculo.marca }} {{ inc.vehiculo.modelo }} {{ inc.vehiculo.anio }}</div>
-        </div>
-        <div class="inc-field" *ngIf="inc.vehiculo?.placa">
-          <div class="inc-field-label">Placa</div>
-          <div class="inc-field-val">{{ inc.vehiculo?.placa }}</div>
-        </div>
-        <div class="inc-field" *ngIf="inc.cliente">
-          <div class="inc-field-label">Cliente</div>
-          <div class="inc-field-val">{{ inc.cliente.nombres }} {{ inc.cliente.apellidos }}</div>
-        </div>
-        <div class="inc-field">
-          <div class="inc-field-label">Ubicación</div>
-          <div class="inc-field-val">
-            {{ inc.direccion_texto || inc.ubicacion || '—' }}
+          <div class="detail-item">
+            <span class="item-label">Placa</span>
+            <span class="item-value placa-badge">{{ d.vehiculo.placa }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="item-label">Año</span>
+            <span class="item-value">{{ d.vehiculo.anio }}</span>
+          </div>
+          <div class="detail-item" *ngIf="d.vehiculo.color">
+            <span class="item-label">Color</span>
+            <span class="item-value">{{ d.vehiculo.color }}</span>
           </div>
         </div>
       </div>
 
-      <div class="inc-footer">
-        <span class="inc-fecha">{{ formatFecha(inc.created_at) }}</span>
-        <button class="btn-aceptar" (click)="abrirModal(inc)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          Aceptar caso
+      <!-- CLIENTE -->
+      <div class="detail-section" *ngIf="d.cliente">
+        <h4 class="detail-title">👤 Cliente</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="item-label">Nombre</span>
+            <span class="item-value">{{ d.cliente.nombres }} {{ d.cliente.apellidos }}</span>
+          </div>
+          <div class="detail-item" *ngIf="d.cliente.telefono">
+            <span class="item-label">Teléfono</span>
+            <a [href]="'tel:' + d.cliente.telefono" class="item-value tel-link">
+              📞 {{ d.cliente.telefono }}
+            </a>
+          </div>
+          <div class="detail-item">
+            <span class="item-label">Email</span>
+            <span class="item-value">{{ d.cliente.email }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTÓN ACEPTAR -->
+      <div class="modal-footer">
+        <button class="btn-cancelar-modal" (click)="cerrarModal()">
+          Cerrar
+        </button>
+        <button
+          class="btn-aceptar-modal"
+          (click)="aceptar(d.asignacion_id)"
+          [disabled]="aceptando() === d.asignacion_id">
+          {{ aceptando() === d.asignacion_id ? '⏳ Aceptando...' : '✅ Aceptar este caso' }}
         </button>
       </div>
+
     </div>
   </div>
-
-  <div *ngIf="tabActiva === 'mis-casos'" class="empty-state">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-      <rect x="3" y="3" width="18" height="18" rx="2"/>
-      <path d="M9 12l2 2 4-4"/>
-    </svg>
-    <p>Aquí aparecerán los casos que hayas aceptado</p>
-  </div>
-
-  <div class="modal-overlay" *ngIf="modalAbierto">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">Aceptar caso</div>
-        <button class="modal-close" (click)="cerrarModal()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-inc-info" *ngIf="incidenteSeleccionado">
-        <div class="modal-inc-title">
-          {{ incidenteSeleccionado.descripcion_manual || incidenteSeleccionado.descripcion | slice:0:80 }}
-        </div>
-        <div class="modal-inc-id">#{{ incidenteSeleccionado.id.slice(0,8).toUpperCase() }}</div>
-      </div>
-
-      <div class="modal-fields">
-        <div class="modal-field">
-          <label>Precio cotizado (Bs.) <span class="req">*</span></label>
-          <input type="number" [(ngModel)]="precio" min="1" placeholder="100">
-        </div>
-        <div class="modal-field">
-          <label>Tiempo estimado (min) <span class="req">*</span></label>
-          <input type="number" [(ngModel)]="tiempoMin" min="1" placeholder="30">
-        </div>
-        <div class="modal-field" style="grid-column:1/-1">
-          <label>Nota para el cliente</label>
-          <input type="text" [(ngModel)]="notaTaller" placeholder="Llevo las herramientas necesarias...">
-        </div>
-      </div>
-
-      <p *ngIf="error" class="msg msg-error" style="margin-top:8px">{{ error }}</p>
-
-      <div class="modal-actions">
-        <button class="btn-cancel-sm" (click)="cerrarModal()" [disabled]="aceptando">Cancelar</button>
-        <button class="btn-confirm" (click)="confirmarAceptacion()" [disabled]="aceptando">
-          {{ aceptando ? 'Aceptando...' : 'Confirmar aceptación' }}
-        </button>
-      </div>
-    </div>
-  </div>
-
 </div>

@@ -5,8 +5,11 @@ import { IncidenteService } from '../../../core/services/incidente.service';
 import { VehiculoService } from '../../vehiculos/vehiculo.service';
 import * as L from 'leaflet';
 
+// Declaramos la interfaz para el reconocimiento de voz del navegador
+const { webkitSpeechRecognition }: any = window as any;
+
 @Component({
-  selector: 'app-reportar-incidente', // Mantengo tu selector con la 'i' extra
+  selector: 'app-reportar-incidente',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './reportar.component.html',
@@ -16,6 +19,14 @@ export class ReportarComponent implements OnInit, AfterViewInit {
   incidenteForm: FormGroup;
   misVehiculos: any[] = [];
   cargando: boolean = false;
+
+  // Variables para la Foto
+  fotoSeleccionada: File | null = null;
+  imagePreview: string | null = null;
+
+  // Variables para el reconocimiento de voz
+  isListening: boolean = false;
+  private recognition: any;
 
   // Variables para el Mapa
   private map: any;
@@ -40,6 +51,9 @@ export class ReportarComponent implements OnInit, AfterViewInit {
       ubicacion: ['0,0'], 
       prioridad: ['media']
     });
+
+    // Inicializamos el motor de voz
+    this.initSpeechRecognition();
   }
 
   ngOnInit(): void {
@@ -57,8 +71,62 @@ export class ReportarComponent implements OnInit, AfterViewInit {
     });
   }
 
+  // --- LÓGICA DE RECONOCIMIENTO DE VOZ ---
+  initSpeechRecognition() {
+    if ('webkitSpeechRecognition' in window) {
+      this.recognition = new webkitSpeechRecognition();
+      this.recognition.continuous = false; 
+      this.recognition.lang = 'es-BO'; // Español de Bolivia
+      this.recognition.interimResults = false;
+
+      this.recognition.onstart = () => {
+        this.isListening = true;
+      };
+
+      this.recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        const valorActual = this.incidenteForm.get('descripcion_manual')?.value || '';
+        this.incidenteForm.patchValue({
+          descripcion_manual: valorActual + (valorActual ? ' ' : '') + transcript
+        });
+        this.isListening = false;
+      };
+
+      this.recognition.onerror = (event: any) => {
+        console.error('Error en reconocimiento:', event.error);
+        this.isListening = false;
+      };
+
+      this.recognition.onend = () => {
+        this.isListening = false;
+      };
+    }
+  }
+
+  toggleDictado() {
+    if (this.isListening) {
+      this.recognition.stop();
+    } else {
+      this.recognition.start();
+    }
+  }
+
+  // --- LÓGICA DE LA FOTO ---
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.fotoSeleccionada = file;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreview = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // --- LÓGICA DEL MAPA ---
   private initMap(): void {
-    // Santa Cruz, Bolivia por defecto
     const lat = -17.7833;
     const lng = -63.1821;
 
@@ -73,13 +141,11 @@ export class ReportarComponent implements OnInit, AfterViewInit {
       draggable: true
     }).addTo(this.map);
 
-    // Al arrastrar manualmente la flecha
     this.marker.on('dragend', () => {
       const position = this.marker.getLatLng();
       this.actualizarUbicacionForm(position.lat, position.lng);
     });
 
-    // Intentar geolocalización automática
     this.map.locate({ setView: true, maxZoom: 16 });
     this.map.on('locationfound', (e: any) => {
       this.marker.setLatLng(e.latlng);
@@ -93,17 +159,25 @@ export class ReportarComponent implements OnInit, AfterViewInit {
     });
   }
 
+  // --- ENVÍO DEL FORMULARIO ---
   enviarIncidente(): void {
     if (this.incidenteForm.valid) {
       this.cargando = true;
-      this.incidenteService.crearIncidente(this.incidenteForm.value).subscribe({
+
+      const formData = new FormData();
+      
+      Object.keys(this.incidenteForm.value).forEach(key => {
+        formData.append(key, this.incidenteForm.value[key]);
+      });
+
+      if (this.fotoSeleccionada) {
+        formData.append('foto', this.fotoSeleccionada);
+      }
+
+      this.incidenteService.crearIncidente(formData).subscribe({
         next: (res) => {
           alert('¡Incidente reportado con éxito!');
-          this.incidenteForm.reset({
-            categoria: 'motor',
-            ubicacion: '0,0',
-            prioridad: 'media'
-          });
+          this.resetearTodo();
           this.cargando = false;
         },
         error: (err) => {
@@ -115,5 +189,16 @@ export class ReportarComponent implements OnInit, AfterViewInit {
     } else {
       Object.values(this.incidenteForm.controls).forEach(control => control.markAsTouched());
     }
+  }
+
+  resetearTodo() {
+    this.incidenteForm.reset({
+      categoria: 'motor',
+      ubicacion: '0,0',
+      prioridad: 'media'
+    });
+    this.fotoSeleccionada = null;
+    this.imagePreview = null;
+    this.isListening = false;
   }
 }

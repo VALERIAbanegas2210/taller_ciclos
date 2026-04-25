@@ -41,6 +41,7 @@ class UsuarioOut(BaseModel):
     tipo: str
     activo: bool
     foto_perfil_url: Optional[str] = None
+    taller_id:       Optional[UUID] = None 
 
     model_config = {"from_attributes": True}
 

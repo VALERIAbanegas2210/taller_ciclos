@@ -1,26 +1,30 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
 from typing import Optional
 from uuid import UUID
 from decimal import Decimal
 
-
-class TallerCreate(BaseModel):
-    nombre:            str
-    email:             EmailStr
-    password:          str
-    telefono:          Optional[str]     = None
-    direccion:         Optional[str]     = None
-    radio_servicio_km: Optional[Decimal] = Decimal("10")
-    descripcion:       Optional[str]     = None
-    latitud:           Optional[float]   = None
-    longitud:          Optional[float]   = None
+# --- CLASE BASE PARA EVITAR REPETICIÓN (DRY) ---
+class TallerBase(BaseModel):
+    nombre:            Optional[str] = Field(None, min_length=1, max_length=150)
+    telefono:          Optional[str] = None
+    direccion:         Optional[str] = None
+    radio_servicio_km: Optional[Decimal] = Field(Decimal("10"), ge=0.1)
+    descripcion:       Optional[str] = None
+    latitud:           Optional[float] = Field(None, ge=-90, le=90)
+    longitud:          Optional[float] = Field(None, ge=-180, le=180)
 
     @field_validator("nombre")
     @classmethod
     def nombre_no_vacio(cls, v):
-        if not v or not v.strip():
+        if v is not None and not v.strip():
             raise ValueError("El nombre no puede estar vacío")
-        return v.strip()
+        return v.strip() if v else v
+
+# --- ESQUEMA DE CREACIÓN ---
+class TallerCreate(TallerBase):
+    nombre:   str  # Re-declaramos como obligatorio
+    email:    EmailStr
+    password: str = Field(..., min_length=8)
 
     @field_validator("password")
     @classmethod
@@ -29,45 +33,31 @@ class TallerCreate(BaseModel):
             raise ValueError("La contraseña debe tener al menos 8 caracteres")
         return v
 
-    @field_validator("radio_servicio_km")
-    @classmethod
-    def radio_positivo(cls, v):
-        if v is not None and v <= 0:
-            raise ValueError("El radio de servicio debe ser mayor a 0")
-        return v
+# --- ESQUEMA DE ACTUALIZACIÓN ---
+class TallerUpdate(TallerBase):
+    password: Optional[str] = Field(None, min_length=8)
+    activo:   Optional[bool] = None
 
-
-class TallerUpdate(BaseModel):
-    nombre:            Optional[str]     = None
-    telefono:          Optional[str]     = None
-    direccion:         Optional[str]     = None
-    radio_servicio_km: Optional[Decimal] = None
-    descripcion:       Optional[str]     = None
-    latitud:           Optional[float]   = None
-    longitud:          Optional[float]   = None
-    activo:            Optional[bool]    = None
-
-
-class TallerOut(BaseModel):
+# --- ESQUEMA DE SALIDA (LO QUE VE EL CLIENTE) ---
+class TallerOut(TallerBase):
     id:                UUID
-    nombre:            str
     email:             str
-    telefono:          Optional[str]     = None
-    direccion:         Optional[str]     = None
-    radio_servicio_km: Optional[Decimal] = None
-    logo_url:          Optional[str]     = None
-    descripcion:       Optional[str]     = None
+    logo_url:          Optional[str] = None
     activo:            bool
     verificado:        bool
     comision_pct:      Decimal
+    
+    # Aseguramos que el cliente reciba la ubicación para dibujar el mapa
+    latitud:           Optional[float]
+    longitud:          Optional[float]
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
 
-
+# --- OTROS ESQUEMAS ---
 class TallerLoginRequest(BaseModel):
     email:    EmailStr
     password: str
-
 
 class LogoTallerOut(BaseModel):
     logo_url: str

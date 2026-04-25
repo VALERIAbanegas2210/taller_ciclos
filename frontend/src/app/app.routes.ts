@@ -43,7 +43,18 @@ export const routes: Routes = [
       import('./modules/dashboard/dashboard/dashboard.component')
         .then(m => m.DashboardComponent)
   },
-  
+  {
+  path: 'casos-disponibles',
+  loadComponent: () =>
+    import('./modules/casos-disponibles/casos-disponibles.component')
+    .then(m => m.CasosDisponiblesComponent)
+},
+{
+  path: 'historial',
+  loadComponent: () =>
+    import('./modules/asignaciones/historial-tecnico/historial-tecnico.component')
+    .then(m => m.HistorialTecnicoComponent)
+},
   {
     path: '**',
     redirectTo: ''

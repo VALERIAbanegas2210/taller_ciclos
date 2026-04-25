@@ -1,11 +1,9 @@
-from sqlalchemy import Column, String, ForeignKey, DECIMAL, Boolean, DateTime
+from sqlalchemy import Column, String, ForeignKey, DECIMAL, Boolean, DateTime, Text
 from sqlalchemy.dialects.mssql import UNIQUEIDENTIFIER
 from sqlalchemy.orm import relationship
 import uuid
-from datetime import datetime
 from app.database import Base
 from sqlalchemy.sql import func
-
 
 
 class Incidente(Base):
@@ -14,32 +12,41 @@ class Incidente(Base):
     id = Column(UNIQUEIDENTIFIER, primary_key=True, default=uuid.uuid4)
     usuario_id = Column(UNIQUEIDENTIFIER, ForeignKey("usuarios.id"), nullable=False)
     vehiculo_id = Column(UNIQUEIDENTIFIER, ForeignKey("vehiculos.id"), nullable=False)
-    
-
-
-# Dentro de tu clase Incidente:
-
 
     # Geolocalización y dirección
     direccion_texto = Column(String(500))
-    ubicacion = Column(String(100)) # Formato "lat,long"
+    ubicacion = Column(String(100))  # Formato "lat,long"
     descripcion_manual = Column(String(1000))
 
     # Clasificación
-    categoria = Column(String(30), default="incierto") # bateria, llanta, choque, etc.
+    categoria = Column(String(30), default="incierto")
     prioridad = Column(String(10), default="media")
-    estado = Column(String(15), default="pendiente") # pendiente, en_proceso, atendido, cancelado
+    estado = Column(String(15), default="pendiente")
 
-    # Resultados opcionales (IA o manual)
+    # Resultados opcionales de IA
     resumen_ia = Column(String(1000), nullable=True)
     confianza_ia = Column(DECIMAL(5, 4), nullable=True)
     requiere_revision = Column(Boolean, default=False)
-    
-    
+
+    # Foto principal del incidente
+    foto_evidencia = Column(Text, nullable=True)
+
     created_at = Column(DateTime, server_default=func.now())
 
-    # Relaciones
-    usuario = relationship("Usuario", back_populates="incidentes")
-    # Asegúrate de tener la relación inversa en el modelo de Vehiculo
-    # vehiculo = relationship("Vehiculo")
-    vehiculo = relationship("Vehiculo", back_populates="incidentes")
+   
+    usuario   = relationship("Usuario",            back_populates="incidentes")
+    vehiculo  = relationship("Vehiculo",           back_populates="incidentes")
+    evidencias = relationship("EvidenciaIncidente", back_populates="incidente")
+    asignaciones = relationship("Asignacion",      back_populates="incidente")  # ← AGREGAR ESTA
+
+class EvidenciaIncidente(Base):
+    __tablename__ = "evidencia_incidentes"
+
+    id = Column(UNIQUEIDENTIFIER, primary_key=True, default=uuid.uuid4)
+    incidente_id = Column(UNIQUEIDENTIFIER, ForeignKey("incidentes.id"), nullable=False)
+
+    ruta_foto = Column(String(255), nullable=False)
+    descripcion = Column(String(255), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    incidente = relationship("Incidente", back_populates="evidencias")

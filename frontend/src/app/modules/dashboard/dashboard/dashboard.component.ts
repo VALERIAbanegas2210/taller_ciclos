@@ -9,6 +9,7 @@ import { MisVehiculosComponent } from '../../vehiculos/mis-vehiculos/mis-vehicul
 import { MiTallerComponent } from '../../taller/mi-taller/mi-taller.component';
 import { ReportarComponent } from '../../incidentes/reportar/reportar.component';
 import { AtenderComponent } from '../../incidentes/atender/atender.component';
+import { HistorialTecnicoComponent } from '../../asignaciones/historial-tecnico/historial-tecnico.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,7 +22,8 @@ import { AtenderComponent } from '../../incidentes/atender/atender.component';
     MisVehiculosComponent, 
     MiTallerComponent,
     ReportarComponent,
-    AtenderComponent
+    AtenderComponent,
+    HistorialTecnicoComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
@@ -68,6 +70,7 @@ export class DashboardComponent implements OnInit {
     if (this.usuario?.tipo === 'tecnico' || this.usuario?.tipo === 'admin') {
     items.push({ id: 'taller', icono: '🔧', label: 'Mi Taller' });
     items.push({ id: 'atender', icono: '🛠️', label: 'Atender Auxilios' });
+    items.push({ id: 'historial', icono: '📋', label: 'Historial de Casos' });
   }
   if (this.usuario?.tipo === 'cliente') {
     items.push({ id: 'vehiculos', icono: '🚗', label: 'Mis vehículos' });

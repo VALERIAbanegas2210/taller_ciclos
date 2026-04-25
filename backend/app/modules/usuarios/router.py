@@ -150,3 +150,17 @@ async def subir_foto(
     base_url = str(request.base_url).rstrip("/")
     url = await service.subir_foto_perfil(db, usuario_id, foto, base_url)
     return FotoPerfilOut(foto_perfil_url=url)
+
+@router.patch("/{usuario_id}/taller")
+def asignar_taller(
+    usuario_id: uuid.UUID,
+    data: dict,
+    db: Session = Depends(get_db),
+):
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    usuario.taller_id = data.get("taller_id")
+    db.commit()
+    db.refresh(usuario)
+    return {"ok": True, "taller_id": str(usuario.taller_id)}
