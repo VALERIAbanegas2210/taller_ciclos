@@ -17,7 +17,9 @@ class Usuario(Base):
     tipo            = Column(String(10),  nullable=False, default="cliente")  # cliente|admin|tecnico
     activo          = Column(Boolean,     nullable=False, default=True)
     foto_perfil_url = Column(Text,        nullable=True)
-
+    
+    fcm_token = Column(String(500), nullable=True) #aqui el notificaciones 
+    
     # Solo aplica si tipo='tecnico' — indica a qué taller pertenece
     taller_id = Column(UNIQUEIDENTIFIER, ForeignKey("talleres.id"), nullable=True)
 

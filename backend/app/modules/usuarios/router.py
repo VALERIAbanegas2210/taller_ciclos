@@ -164,3 +164,13 @@ def asignar_taller(
     db.commit()
     db.refresh(usuario)
     return {"ok": True, "taller_id": str(usuario.taller_id)}
+
+@router.post("/fcm-token")
+def guardar_fcm_token(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    current_user.fcm_token = data.get('fcm_token')
+    db.commit()
+    return {"ok": True}

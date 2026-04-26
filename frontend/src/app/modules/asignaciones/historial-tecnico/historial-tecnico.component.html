@@ -1,7 +1,6 @@
 <!-- ══════════════════════════════════════════════════
      HISTORIAL DEL TÉCNICO
      ══════════════════════════════════════════════════ -->
-
 <div class="historial-wrapper">
 
   <!-- HEADER -->
@@ -47,8 +46,8 @@
     <span class="empty-icon">
       {{ tabActiva() === 'pendientes' ? '⏳' : tabActiva() === 'proceso' ? '🚗' : '🎉' }}
     </span>
-    <p *ngIf="tabActiva() === 'pendientes'">No tienes casos pendientes de atender.</p>
-    <p *ngIf="tabActiva() === 'proceso'">No tienes casos en proceso actualmente.</p>
+    <p *ngIf="tabActiva() === 'pendientes'">No tienes casos pendientes.</p>
+    <p *ngIf="tabActiva() === 'proceso'">No tienes casos en proceso.</p>
     <p *ngIf="tabActiva() === 'terminados'">No tienes casos terminados aún.</p>
   </div>
 
@@ -56,20 +55,14 @@
   <div class="casos-grid" *ngIf="!cargando() && casos().length > 0">
     <div class="caso-card" *ngFor="let caso of casos()">
 
-      <!-- HEADER TARJETA -->
       <div class="card-header">
         <div class="card-badges">
           <span class="badge badge--cat">{{ caso.categoria | uppercase }}</span>
-          <span class="badge" [class]="prioridadClass(caso.prioridad)">
-            {{ caso.prioridad | uppercase }}
-          </span>
+          <span class="badge" [class]="prioridadClass(caso.prioridad)">{{ caso.prioridad | uppercase }}</span>
         </div>
-        <span class="estado-chip" [class]="estadoClass(caso.estado)">
-          {{ estadoLabel(caso.estado) }}
-        </span>
+        <span class="estado-chip" [class]="estadoClass(caso.estado)">{{ estadoLabel(caso.estado) }}</span>
       </div>
 
-      <!-- VEHÍCULO -->
       <div class="vehiculo-row" *ngIf="caso.vehiculo">
         <span class="vehiculo-icon">🚗</span>
         <div>
@@ -78,28 +71,18 @@
         </div>
       </div>
 
-      <!-- DESCRIPCIÓN -->
       <p class="caso-desc">{{ caso.descripcion_manual }}</p>
 
-      <!-- META -->
       <div class="caso-meta">
         <span *ngIf="caso.direccion_texto">📍 {{ caso.direccion_texto }}</span>
-        <span *ngIf="caso.distancia_km" class="distancia">
-          🛣️ {{ caso.distancia_km | number:'1.1-1' }} km
-        </span>
-        <span *ngIf="caso.aceptado_at" class="fecha">
-          🕐 Aceptado: {{ caso.aceptado_at | date:'dd/MM/yyyy HH:mm' }}
-        </span>
-        <span *ngIf="caso.completado_at" class="fecha fecha--completado">
-          ✅ Completado: {{ caso.completado_at | date:'dd/MM/yyyy HH:mm' }}
-        </span>
+        <span *ngIf="caso.distancia_km" class="distancia">🛣️ {{ caso.distancia_km | number:'1.1-1' }} km</span>
+        <span *ngIf="caso.aceptado_at"  class="fecha">🕐 Aceptado: {{ caso.aceptado_at | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span *ngIf="caso.completado_at" class="fecha fecha--completado">✅ Completado: {{ caso.completado_at | date:'dd/MM/yyyy HH:mm' }}</span>
       </div>
 
-      <!-- BOTONES -->
       <div class="card-actions">
-        <button class="btn-ver" (click)="abrirModal(caso)">
-          🔍 Ver detalle
-        </button>
+        <button class="btn-ver" (click)="abrirModal(caso)">🔍 Ver detalle</button>
+
         <ng-container *ngFor="let accion of accionesPosibles(caso.estado)">
           <button
             [class]="'btn-accion ' + accion.clase"
@@ -108,17 +91,23 @@
             {{ cambiando() === caso.asignacion_id ? '⏳...' : accion.label }}
           </button>
         </ng-container>
+
+        <!-- Botón cobro SOLO en tab terminados -->
+        <button
+          *ngIf="mostrarBotonCobro(caso)"
+          class="btn-accion btn-cobrar"
+          (click)="abrirModalCobro(caso)">
+          💳 Enviar cobro
+        </button>
       </div>
 
     </div>
   </div>
-
 </div>
 
 <!-- ══════════════════════════════════════════════════
-     MODAL DE DETALLE
+     MODAL DETALLE
      ══════════════════════════════════════════════════ -->
-
 <div class="modal-overlay" *ngIf="modalCaso() as c" (click)="cerrarModal()">
   <div class="modal-panel" (click)="$event.stopPropagation()">
 
@@ -128,28 +117,23 @@
     </div>
 
     <div class="modal-body">
-
-      <!-- Estado actual -->
       <div class="detail-badges">
         <span class="badge badge--cat">{{ c.categoria | uppercase }}</span>
         <span class="badge" [class]="prioridadClass(c.prioridad)">{{ c.prioridad | uppercase }}</span>
         <span class="estado-chip" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
       </div>
 
-      <!-- Descripción -->
       <div class="detail-section">
         <h4 class="detail-title">📝 Descripción</h4>
         <p class="detail-text">{{ c.descripcion_manual }}</p>
       </div>
 
-      <!-- Foto -->
       <div class="detail-section" *ngIf="c.foto_evidencia">
         <h4 class="detail-title">📷 Foto del incidente</h4>
         <img [src]="getFotoUrl(c.foto_evidencia)" class="foto-evidencia"
              (error)="$any($event.target).style.display='none'" />
       </div>
 
-      <!-- Vehículo -->
       <div class="detail-section" *ngIf="c.vehiculo">
         <h4 class="detail-title">🚗 Vehículo</h4>
         <div class="detail-grid">
@@ -172,20 +156,15 @@
         </div>
       </div>
 
-      <!-- RESUMEN DE IA -->
       <div class="detail-section ia-section" *ngIf="c.resumen_ia">
         <h4 class="detail-title ia-title">
           🤖 Análisis de IA
-          <span class="confianza-badge" *ngIf="c.confianza_ia">
-            {{ (c.confianza_ia * 100) | number:'1.0-0' }}% confianza
-          </span>
-          <span class="revision-badge" *ngIf="c.requiere_revision">
-            ⚠️ Requiere revisión
-          </span>
+          <span class="confianza-badge" *ngIf="c.confianza_ia">{{ (c.confianza_ia * 100) | number:'1.0-0' }}% confianza</span>
+          <span class="revision-badge"  *ngIf="c.requiere_revision">⚠️ Requiere revisión</span>
         </h4>
         <p class="ia-resumen">{{ c.resumen_ia }}</p>
       </div>
-      <!-- Fechas -->
+
       <div class="detail-section">
         <h4 class="detail-title">🕐 Fechas</h4>
         <div class="detail-grid">
@@ -203,10 +182,8 @@
           </div>
         </div>
       </div>
-
     </div>
 
-    <!-- Footer con acciones -->
     <div class="modal-footer">
       <button class="btn-cerrar-modal" (click)="cerrarModal()">Cerrar</button>
       <ng-container *ngFor="let accion of accionesPosibles(c.estado)">
@@ -217,6 +194,136 @@
           {{ cambiando() === c.asignacion_id ? '⏳ Actualizando...' : accion.label }}
         </button>
       </ng-container>
+      <button
+        *ngIf="mostrarBotonCobro(c)"
+        class="btn-accion-modal btn-cobrar"
+        (click)="cerrarModal(); abrirModalCobro(c)">
+        💳 Enviar cobro
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL COBRO
+     ══════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalCobro() as c" (click)="cerrarModalCobro()">
+  <div class="modal-panel modal-cobro" (click)="$event.stopPropagation()">
+
+    <div class="modal-header cobro-header">
+      <div class="cobro-header-left">
+        <span class="cobro-icon">💳</span>
+        <div>
+          <h3>Enviar Cobro al Cliente</h3>
+          <p>{{ c.vehiculo?.marca }} {{ c.vehiculo?.modelo }} — {{ c.vehiculo?.placa }}</p>
+        </div>
+      </div>
+      <button class="modal-close" (click)="cerrarModalCobro()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="alert alert-error" *ngIf="errorCobro()">⚠️ {{ errorCobro() }}</div>
+
+      <!-- Info del caso -->
+      <div class="cobro-info-caso">
+        <span class="badge badge--cat">{{ c.categoria | uppercase }}</span>
+        <p class="cobro-descripcion-inc">{{ c.descripcion_manual }}</p>
+      </div>
+
+      <!-- Monto -->
+      <div class="cobro-field">
+        <label class="cobro-label">💰 Monto total (Bs)</label>
+        <input
+          type="number"
+          class="cobro-input"
+          placeholder="Ej: 150.00"
+          [(ngModel)]="formCobro.monto_total"
+          min="1" step="0.50" />
+      </div>
+
+      <!-- Descripción -->
+      <div class="cobro-field">
+        <label class="cobro-label">📝 Descripción del servicio realizado</label>
+        <textarea
+          class="cobro-textarea"
+          rows="3"
+          placeholder="Ej: Cambio de batería, revisión del alternador..."
+          [(ngModel)]="formCobro.descripcion">
+        </textarea>
+      </div>
+
+      <!-- Método -->
+      <div class="cobro-field">
+        <label class="cobro-label">💳 Método de pago</label>
+        <div class="metodos-grid">
+          <button
+            *ngFor="let m of metodos"
+            class="metodo-btn"
+            [class.metodo-activo]="formCobro.metodo === m.valor"
+            (click)="formCobro.metodo = m.valor">
+            {{ m.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- QR — seleccionar desde galería -->
+      <div class="cobro-field" *ngIf="formCobro.metodo === 'qr'">
+        <label class="cobro-label">📱 Imagen de tu QR de pago</label>
+
+        <!-- Input oculto -->
+        <input
+          #qrInput
+          type="file"
+          accept="image/*"
+          style="display:none"
+          (change)="onQrImagenSeleccionada($event)" />
+
+        <!-- Botón abrir galería -->
+        <button
+          type="button"
+          class="btn-subir-qr"
+          (click)="abrirGaleriaQR()">
+          🖼️ {{ qrImagenPreview() ? 'Cambiar imagen QR' : 'Seleccionar imagen QR de galería' }}
+        </button>
+
+        <!-- Preview -->
+        <div class="qr-preview" *ngIf="qrImagenPreview()">
+          <img [src]="qrImagenPreview()!" class="qr-img-preview" alt="QR preview" />
+          <p class="qr-preview-label">✅ QR seleccionado correctamente</p>
+          <button type="button" class="btn-quitar-qr" (click)="quitarQR()">
+            ✕ Quitar imagen
+          </button>
+        </div>
+      </div>
+
+      <!-- Resumen -->
+      <div class="cobro-resumen" *ngIf="formCobro.monto_total && formCobro.monto_total > 0">
+        <h4>📊 Resumen del cobro</h4>
+        <div class="resumen-row">
+          <span>Monto total:</span>
+          <strong class="resumen-monto">Bs {{ formCobro.monto_total | number:'1.2-2' }}</strong>
+        </div>
+        <div class="resumen-row">
+          <span>Método:</span>
+          <span>{{ formCobro.metodo | uppercase }}</span>
+        </div>
+        <p class="resumen-nota">⚡ El cliente recibirá una notificación inmediatamente.</p>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cerrar-modal" (click)="cerrarModalCobro()" [disabled]="enviandoCobro()">
+        Cancelar
+      </button>
+      <button
+        class="btn-enviar-cobro"
+        [disabled]="enviandoCobro()"
+        (click)="enviarCobro()">
+        {{ enviandoCobro() ? '⏳ Enviando...' : '💳 Enviar cobro al cliente' }}
+      </button>
     </div>
 
   </div>
